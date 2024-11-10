@@ -5,15 +5,9 @@ const CustomError = require("../../utils/CustomError");
 
 const createPost = asyncHandler(async (req, res) => {
   // get the payload
-  const { title, description } = req.body;
+  const { description } = req.body;
 
-  // find post by title
-  const post = await Post.findOne({ title });
-  if (post) {
-    throw new CustomError("Post already exists", 400);
-  }
   const postCreated = await Post.create({
-    title,
     description,
   });
 
@@ -25,11 +19,55 @@ const createPost = asyncHandler(async (req, res) => {
 });
 
 const getAllPosts = asyncHandler(async (req, res) => {
-  const posts = await Post.find();
+  const { page = 1, limit = 10, cursor } = req.query;
+  const pageNumber = parseInt(page);
+  const limitNumber = parseInt(limit);
+
+  let query = {};
+  let posts;
+  let totalPosts;
+
+  // If cursor is provided, use cursor-based pagination
+  if (cursor) {
+    query = { _id: { $lt: cursor } };
+  }
+
+  // Fetch one extra post to determine if there are more
+  posts = await Post.find(query)
+    .sort({ _id: -1 })
+    .limit(limitNumber + 1);
+
+  // Check if there are more posts
+  const hasMore = posts.length > limitNumber;
+  // Remove the extra post from response
+  posts = posts.slice(0, limitNumber);
+
+  // Get the next cursor
+  const nextCursor = posts.length > 0 ? posts[posts.length - 1]._id : null;
+
+  // Only get total counts for page-based pagination
+  if (!cursor) {
+    totalPosts = await Post.countDocuments();
+  }
+
   res.json({
     status: "success",
     message: "Posts fetched successfully",
-    data: posts,
+    data: {
+      posts,
+      pagination: {
+        nextCursor, // Always include nextCursor
+        hasMore,
+        ...(cursor
+          ? {} // Cursor-based pagination only needs nextCursor and hasMore
+          : {
+              // Page-based pagination includes additional info
+              currentPage: pageNumber,
+              totalPages: Math.ceil(totalPosts / limitNumber),
+              totalPosts,
+            }),
+      },
+    },
   });
 });
 
