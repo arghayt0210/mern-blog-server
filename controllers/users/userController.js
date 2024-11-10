@@ -26,7 +26,6 @@ const register = asyncHandler(async (req, res) => {
   res.status(201).json({
     status: "success",
     message: "User registered successfully",
-    data: newUser,
   });
 });
 
@@ -65,7 +64,41 @@ const login = asyncHandler(async (req, res, next) => {
   })(req, res, next);
 });
 
+// Google OAuth
+const googleAuth = passport.authenticate("google", { scope: ["profile"] });
+// !google auth callback
+const googleAuthCallback = asyncHandler(async (req, res, next) => {
+  passport.authenticate(
+    "google",
+    {
+      failureRedirect: "/login",
+      session: false,
+    },
+    (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.redirect("http://localhost:5173/google-login-error");
+      }
+      // generate token
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+
+      // set token in cookie
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+      });
+      res.redirect("http://localhost:5173/dashboard");
+    }
+  )(req, res, next);
+});
+
 module.exports = {
   register,
   login,
+  googleAuth,
+  googleAuthCallback,
 };
