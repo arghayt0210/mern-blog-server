@@ -8,15 +8,16 @@ const {
   getSinglePost,
   deletePost,
 } = require("../../controllers/post/postControllers");
+const upload = require("../../utils/cloudinary");
 
 // ----Create Post----
-postRouter.post("/create", createPost);
+postRouter.post("/create", upload.single("image"), createPost);
 
 // ----Get All Posts----
 postRouter.get("/", getAllPosts);
 
 // ----Update Post----
-postRouter.put("/:postId", updatePost);
+postRouter.put("/:postId", upload.single("image"), updatePost);
 // ----Get Post----
 postRouter.get("/:postId", getSinglePost);
 // ----Delete Post----

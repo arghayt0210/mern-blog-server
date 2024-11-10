@@ -1,11 +1,11 @@
 const express = require("express");
+require("dotenv").config();
 const Post = require("./models/post/post");
 const connectDb = require("./utils/connectDb");
 const cors = require("cors");
 const { default: mongoose } = require("mongoose");
 const CustomError = require("./utils/CustomError");
 const postRouter = require("./router/post/postRouter");
-require("dotenv").config();
 
 connectDb();
 

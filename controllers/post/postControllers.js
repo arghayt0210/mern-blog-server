@@ -6,9 +6,11 @@ const CustomError = require("../../utils/CustomError");
 const createPost = asyncHandler(async (req, res) => {
   // get the payload
   const { description } = req.body;
+  const image = req.file;
 
   const postCreated = await Post.create({
     description,
+    image,
   });
 
   res.json({
@@ -73,7 +75,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
 
 const updatePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
-  const { title, description } = req.body;
+  const { description } = req.body;
 
   // Check if postId is a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(postId)) {
@@ -90,7 +92,7 @@ const updatePost = asyncHandler(async (req, res) => {
   const updatedPost = await Post.findByIdAndUpdate(
     postId,
     {
-      title,
+      image: req.file,
       description,
     },
     { new: true } // return the updated post
